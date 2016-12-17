@@ -1,0 +1,38 @@
+PODS:
+  - Bond (5.2.0):
+    - ReactiveKit (~> 3.1)
+  - ChameleonFramework/Default (2.1.0)
+  - ChameleonFramework/Swift (2.1.0):
+    - ChameleonFramework/Default
+  - PureLayout (3.0.2)
+  - ReactiveKit (3.1.1)
+  - SCLAlertView (0.7.0)
+  - SwiftyAttributes (3.0.0)
+
+DEPENDENCIES:
+  - Bond (~> 5.2)
+  - ChameleonFramework/Swift (from `https://github.com/ViccAlexander/Chameleon.git`)
+  - PureLayout
+  - SCLAlertView
+  - SwiftyAttributes
+
+EXTERNAL SOURCES:
+  ChameleonFramework:
+    :git: https://github.com/ViccAlexander/Chameleon.git
+
+CHECKOUT OPTIONS:
+  ChameleonFramework:
+    :commit: dcf98f9bf3a632a7f40679b7da46f09681e48526
+    :git: https://github.com/ViccAlexander/Chameleon.git
+
+SPEC CHECKSUMS:
+  Bond: 1b47668f3c9fb3f5aec3655c5b9315ab435610f6
+  ChameleonFramework: d21a3cc247abfe5e37609a283a8238b03575cf64
+  PureLayout: 4d550abe49a94f24c2808b9b95db9131685fe4cd
+  ReactiveKit: e830df3deeb6cdf2acd18cee5cf07cb25488ae4e
+  SCLAlertView: 8a14ffc40590c619e183eed2298b854385f30be1
+  SwiftyAttributes: 92a9f6512be7a11a2530046220f1c1fbb644e407
+
+PODFILE CHECKSUM: 6ed555bc07c8bce6fe7df8d5dc48a46e84b6958b
+
+COCOAPODS: 1.1.1
