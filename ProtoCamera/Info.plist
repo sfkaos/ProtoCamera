@@ -32,6 +32,8 @@
 	<string>Record video</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Record audio</string>
+	<key>UIViewControllerBasedStatusBarAppearance</key>
+	<true/>
 	<key>UISupportedInterfaceOrientations</key>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>

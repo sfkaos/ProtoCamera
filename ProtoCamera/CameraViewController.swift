@@ -25,6 +25,10 @@ protocol VideoProcessor {
 
 class CameraViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDelegate {
 
+    enum CameraStatus {
+        case recording, previewing, idling
+    }
+
     enum CameraPosition {
         case front, rear
         mutating func toggle() {
@@ -46,6 +50,8 @@ class CameraViewController: UIViewController, AVCaptureVideoDataOutputSampleBuff
     }
 
     let progressBarHeight: CGFloat = 5.0
+
+    var cameraStatus = CameraStatus.idling
 
     //Timer
     var startTime = TimeInterval()
@@ -75,8 +81,6 @@ class CameraViewController: UIViewController, AVCaptureVideoDataOutputSampleBuff
 
     var timerLabel: UILabel!
 
-    var isRecording = false
-    var isPreviewing = false
     var currentCameraPosition = CameraPosition.front
 
     var currentFilePath: URL?    
@@ -410,7 +414,7 @@ extension CameraViewController: CameraViewModelDelegate {
 
     func toggleCamera() {
         var restartRecording = false
-        if (isRecording) {
+        if (cameraStatus == .recording) {
             didStopRecording()
             restartRecording = true
         }
@@ -432,7 +436,7 @@ extension CameraViewController: CameraViewModelDelegate {
     }
 
     func didStartRecording() {
-        isRecording = true
+        cameraStatus = .recording
         currentFilePath = tempFileName()
         viewModel?.videoIsRecording.value = true
         dataOutput?.startRecording(toOutputFileURL: currentFilePath, recordingDelegate: delegate)
@@ -442,12 +446,12 @@ extension CameraViewController: CameraViewModelDelegate {
     func didStopRecording() -> Void {
         dataOutput?.stopRecording()
         viewModel?.videoIsRecording.value = false
-        if (isRecording) {
-            isRecording = false
+        if (cameraStatus == .recording) {
             if let currentFilePath = currentFilePath {
                 viewModel?.addSegmentURL(segmentUrl: currentFilePath)
             }
             stopTimer()
+            cameraStatus = .idling
         }
     }
 
@@ -464,39 +468,43 @@ extension CameraViewController: CameraViewModelDelegate {
     }
 
     func playButtonPressed() {
-        isPreviewing = true
-        mergeVideoSegments(videoSegments: (viewModel?.videoSegments.value)!, completionHandler: {[unowned self] exportSession in
-            if let url = exportSession.outputURL {
-                self.player = AVPlayer(url: url)
-                NotificationCenter.default.addObserver(self, selector:#selector(self.playerDidFinishPlaying(note:)),name: NSNotification.Name.AVPlayerItemDidPlayToEndTime, object: self.player!.currentItem)
-                self.playerLayer = AVPlayerLayer(player: self.player!)
-                self.playerLayer!.frame = self.view.bounds
-                self.playerLayer!.videoGravity = AVLayerVideoGravityResizeAspectFill;
-                self.previewView.layer.addSublayer(self.playerLayer!)
-                self.player!.play()
-            }
-        })
+        if cameraStatus == .idling {
+            cameraStatus = .previewing
+            mergeVideoSegments(videoSegments: (viewModel?.videoSegments.value)!, completionHandler: {[unowned self] exportSession in
+                if let url = exportSession.outputURL {
+                    self.player = AVPlayer(url: url)
+                    NotificationCenter.default.addObserver(self, selector:#selector(self.playerDidFinishPlaying(note:)),name: NSNotification.Name.AVPlayerItemDidPlayToEndTime, object: self.player!.currentItem)
+                    self.playerLayer = AVPlayerLayer(player: self.player!)
+                    self.playerLayer!.frame = self.view.bounds
+                    self.playerLayer!.videoGravity = AVLayerVideoGravityResizeAspectFill;
+                    self.previewView.layer.addSublayer(self.playerLayer!)
+                    self.player!.play()
+                }
+            })
+        }
     }
 
     func doneButtonPressed() {
-        mergeVideoSegments(videoSegments: (viewModel?.videoSegments.value)!, completionHandler: { exportSession in
-            if let url = exportSession.outputURL {
-                let alertView = SCLAlertView()
-                alertView.showTitle(
-                    "Completed recording.",
-                    subTitle: "Access the video at \(url).",
-                    duration: 0.0,
-                    completeText: "Okay",
-                    style: .info,
-                    colorStyle: 0xA429FF,
-                    colorTextButton: 0xFFFFFF
-                )
-            }
-        })
+        if cameraStatus == .idling {
+            mergeVideoSegments(videoSegments: (viewModel?.videoSegments.value)!, completionHandler: { exportSession in
+                if let url = exportSession.outputURL {
+                    let alertView = SCLAlertView()
+                    alertView.showTitle(
+                        "Completed recording.",
+                        subTitle: "Access the video at \(url).",
+                        duration: 0.0,
+                        completeText: "Okay",
+                        style: .info,
+                        colorStyle: 0xA429FF,
+                        colorTextButton: 0xFFFFFF
+                    )
+                }
+            })
+        }
     }
 
     func didTapView(_ sender: UITapGestureRecognizer) {
-        if (isPreviewing) {
+        if (cameraStatus == .previewing) {
             self.stopPreview()
         } else {
             self.toggleCamera()
@@ -504,9 +512,9 @@ extension CameraViewController: CameraViewModelDelegate {
     }
 
     func stopPreview()  {
-        isPreviewing = false
         player?.replaceCurrentItem(with: nil)
         playerLayer!.removeFromSuperlayer()
+        cameraStatus = .idling
     }
 
     func startTimer() {
@@ -531,7 +539,7 @@ extension CameraViewController: CameraViewModelDelegate {
 
 extension CameraViewController: AVCaptureFileOutputRecordingDelegate {
     @objc(captureOutput:didFinishRecordingToOutputFileAtURL:fromConnections:error:) func capture(_ captureOutput: AVCaptureFileOutput!, didFinishRecordingToOutputFileAt outputFileURL: URL!, fromConnections connections: [Any]!, error: Error!) {
-        isRecording = false
+        cameraStatus = .idling
         guard let _ = NSData(contentsOf: outputFileURL as URL) else {
             print("Output file could not be created.")
             return
@@ -539,6 +547,6 @@ extension CameraViewController: AVCaptureFileOutputRecordingDelegate {
     }
 
     @objc(captureOutput:didStartRecordingToOutputFileAtURL:fromConnections:) func capture(_ captureOutput: AVCaptureFileOutput!, didStartRecordingToOutputFileAt fileURL: URL!, fromConnections connections: [Any]!) {
-        isRecording = true
+        cameraStatus = .recording
     }
 }

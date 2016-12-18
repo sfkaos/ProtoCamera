@@ -82,7 +82,6 @@ class CameraViewModel {
 
     func recordButtonDepressed() {
         print("Stop recording")
-
         delegate?.didStopRecording()
     }
 
